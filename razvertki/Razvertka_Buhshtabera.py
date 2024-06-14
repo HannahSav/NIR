@@ -38,7 +38,7 @@ def plot_columns_data_one_plot(columns_data, data_name):
     if columns_data and 'X[s]' in columns_data:
         x_values = columns_data['X[s]']
 
-        plt.figure(figsize=(15, 10))
+        plt.figure(figsize=(12, 6))
 
         for column_name in columns_data.keys():
             if column_name != 'X[s]' and columns_data[column_name] is not None:
@@ -55,10 +55,11 @@ def plot_columns_data_one_plot(columns_data, data_name):
 def take_data(data_file, data_name):
     column_names = ['X[s]', 'FDS galileo: dEMG.A 1', 'FDS galileo: dEMG.B 1', 'FDS galileo: dEMG.C 1', 'FDS galileo: dEMG.D 1', 'FDS avanti: EMG 2']
     start = 0
-    stop = 15000
+    stop = 9000 # почему при 10-15к соединяются?? разное количество измерений....
     step = 50
     data = pd.read_excel(data_file)
     columns_data = {}
+    print(f"{finger} : {data.size} lines in file")
     for column_name in column_names:
         columns_data[column_name] = data[column_name].tolist()[start:stop:step]
     plot_columns_data_one_plot(columns_data, data_name)
@@ -82,25 +83,61 @@ def pca_projection(vectors, r):
     return pca.fit_transform(vectors)
 
 # Визуализация проекций для r=2 или r=3
-def plot_projection(projections, r, data_name):
+def plot_projection_diff_plots(projections_dict, r, data_name):
+    num_fingers = len(projections_dict)
     if r == 2:
+        fig, axs = plt.subplots(1, num_fingers, figsize=(15, 5))
         plt.suptitle('{} on {} projections'.format(data_name, r))
-        plt.scatter(projections[:, 0], projections[:, 1])
-        plt.xlabel('PC1')
-        plt.ylabel('PC2')
+        for i, (finger, projections) in enumerate(projections_dict.items()):
+            axs[i].scatter(projections[:, 0], projections[:, 1], color='green', s=20, alpha=0.75)
+            # Draw lines connecting points
+            axs[i].plot(projections[:, 0], projections[:, 1], color='red', alpha=0.5)
+            axs[i].set_title(finger)
+            axs[i].set_xlabel('PC1')
+            axs[i].set_ylabel('PC2')
         plt.show()
     elif r == 3:
-        fig = plt.figure()
+        fig = plt.figure(figsize=(15, 10))
         plt.suptitle('{} on {} projections'.format(data_name, r))
-        ax = fig.add_subplot(111, projection='3d')
-        ax.scatter(projections[:, 0], projections[:, 1], projections[:, 2])
-        ax.set_xlabel('PC1')
-        ax.set_ylabel('PC2')
-        ax.set_zlabel('PC3')
+        for i, (finger, projections) in enumerate(projections_dict.items()):
+            ax = fig.add_subplot(2, 3, i + 1, projection='3d')
+            ax.scatter(projections[:, 0], projections[:, 1], projections[:, 2], color='green', s=20, alpha=0.75)
+            # Draw lines connecting points
+            for j in range(len(projections) - 1):
+                ax.plot([projections[j, 0], projections[j + 1, 0]],
+                        [projections[j, 1], projections[j + 1, 1]],
+                        [projections[j, 2], projections[j + 1, 2]], color='red', alpha=0.5)
+            ax.set_title(finger)
+            ax.set_xlabel('PC1')
+            ax.set_ylabel('PC2')
+            ax.set_zlabel('PC3')
         plt.show()
     else:
         print("r слишком велик для визуализации. Посмотреть не получится. Придумай как оценить...")
 
+# def plot_projection_one_plot(projections_dict, r, data_name):
+#     if r == 2:
+#         plt.figure(figsize=(8, 6))
+#         plt.suptitle('{} on {} projections'.format(data_name, r))
+#         for finger, projections in projections_dict.items():
+#             plt.scatter(projections[:, 0], projections[:, 1], label=finger)
+#         plt.xlabel('PC1')
+#         plt.ylabel('PC2')
+#         plt.legend()
+#         plt.show()
+#     elif r == 3:
+#         fig = plt.figure(figsize=(10, 8))
+#         plt.suptitle('{} on {} projections'.format(data_name, r))
+#         ax = fig.add_subplot(111, projection='3d')
+#         for finger, projections in projections_dict.items():
+#             ax.scatter(projections[:, 0], projections[:, 1], projections[:, 2], label=finger)
+#         ax.set_xlabel('PC1')
+#         ax.set_ylabel('PC2')
+#         ax.set_zlabel('PC3')
+#         ax.legend()
+#         plt.show()
+#     else:
+#         print("r слишком велик для визуализации. Посмотреть не получится. Придумай как оценить...")
 
 N = 200
 n = 10
@@ -125,9 +162,11 @@ fingers_file_names = {
     "Minimi" : "minimi_flex_Rep_2.2.xlsx"
 }
 
+projections_columns = {}
+
 for finger, file in fingers_file_names.items():
     # Чтение временного ряда
-    time_series_columns = take_data(data_file="anularis_flex_Rep_1.12.xlsx", data_name=finger)
+    time_series_columns = take_data(data_file=file, data_name=finger)
 
     # Формирование векторов
     vector_columns = {}
@@ -136,12 +175,13 @@ for finger, file in fingers_file_names.items():
             vector_columns[key] = sliding_window(value, n)
 
     # Проекция на r-мерное пространство
-    projections_columns = {}
     for key, value in vector_columns.items():
-        projections_columns[key] = pca_projection(value, r)
+        if key not in projections_columns.keys():
+            projections_columns[key] = {}
+        projections_columns[key][finger] = pca_projection(value, r)
 
-    # Визуализация проекций
-    for key, proj in projections_columns.items():
-        print(key)
-        plot_projection(proj, r, key)
+# Визуализация проекций
+for key, fingers in projections_columns.items():
+    print(key)
+    plot_projection_diff_plots(fingers, r, key)
 
