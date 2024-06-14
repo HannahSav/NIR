@@ -1,0 +1,279 @@
+1 /**
+2 * This Project consist in control a double pendulum with OpenSim API.
+3 *
+4 *
+5 */
+6
+7 #include <OpenSim/OpenSim.h>
+8 using namespace OpenSim;
+9 using namespace std;
+10
+11 class PendulumController : public Controller
+12 {
+13 OpenSim_DECLARE_CONCRETE_OBJECT(PendulumController, Controller);
+14 public:
+15 PendulumController(double firstJointAngle, double secondJointAngle) : Controller(),
+16 r1(firstJointAngle), r2(secondJointAngle)
+17 {
+18 }
+19
+20 double getAngleFromJoints(SimTK::String joint, const SimTK::State &s) const
+21 {
+22 double z = _model->getCoordinateSet().get(joint).getValue(s);
+23 return z;
+24 }
+25
+26 double getError(double ref, double aCtAngle) const
+27 {
+28 return aCtAngle - ref;
+29 }
+30
+31 void getAlphaAndK(double Kp, double Kv, double* getAlphaK) const
+32 {
+33 double alpha = (-Kv + sqrt(pow(Kv,2) - 4*Kp)/2);
+34 double k = 2*Kp/alpha;
+35 getAlphaK[0] = alpha;
+36 getAlphaK[1] = k;
+37
+38 }
+39
+40 double controlFirstJoint(SimTK::State s,double ref,double k,double alpha, double *getErr=nullptr) const
+41 {
+42 double xt_0 = getAngleFromJoints("q1",s); // Get actual Joint’s angle
+43 static double xt_1 = 0;
+44 double err = getError(ref, xt_0);
+45 if(getErr != nullptr) // return the error using a pointer, in case of needing it
+46 *getErr = err;
+47 double dx = (xt_0 - xt_1)/0.033; // Compute the derivation of the position
+48 xt_1 = xt_0;
+49 double torque = alpha*k/2.0*err - (k/2 + alpha)*dx; // Control law
+50 return torque;
+51 }
+52
+53 double controlSecondtJoint(SimTK::State s,double ref,double k,double alpha,double* getErr=nullptr) const
+54 {
+55 double xt_0 = getAngleFromJoints("q2",s);
+56 static double xt_1 = 0;
+57 double err = getError(ref, xt_0);
+58 if(getErr != nullptr)
+59 *getErr = err;
+60 double dx = (xt_0 - xt_1)/0.033;
+61 xt_1 = xt_0;
+62 double desAcc = alpha*k/2.0*(err) - (k/2 + alpha)*dx;
+63 return desAcc;
+64 }
+65
+66 SimTK::Vector gravityCompensation(const SimTK::State &s) const
+67 {
+68 SimTK::Vector g;
+69 _model->getMatterSubsystem().
+70 multiplyBySystemJacobianTranspose(s,
+71 _model->getGravityForce().getBodyForces(s),
+72 g);
+73 return g;
+74 }
+75
+76 void computeControls(const SimTK::State& s, SimTK::Vector &controls) const
+77 {
+78 double KP1 = 1, KV1 = 10;
+79 double KP2 = 0.08, KV2 = 1;
+80
+81 SimTK::Vector_<double> desAcc(2);
+82 desAcc[0] = controlFirstJoint(s,r1,KP1,KV1);
+83 desAcc[1] = controlSecondtJoint(s,r2,KP2,KV2);
+84
+85 SimTK::Vector gravForce(gravityCompensation(s));
+86
+87 SimTK::Vector desTorque;
+88 _model->updMatterSubsystem().multiplyByM(s, desAcc, desTorque);
+89
+90 //SimTK::Array_<SimTK::MobilizedBodyIndex> onBodyB;
+91
+92 SimTK::Vector_<double> torque(2);
+93 for(int i = 0; i < 2; i++)
+94 {
+95 torque[i] = (desTorque[i]
+96 + gravForce.get(i)) / _model->getActuators().
+97 get(i).getOptimalForce();
+98 }
+99
+100 SimTK::Vector torqueControl_1(1,torque[0]);
+101 _model->updActuators().get("firstJointActuator").addInControls(torqueControl_1, controls);
+102 SimTK::Vector torqueControl_2(1,torque[1]);
+103 _model->updActuators().get("secondJointActuator").addInControls(torqueControl_2, controls);
+104
+105 }
+106
+107 private:
+108 double r1, r2;
+109
+110
+111 };
+112
+113 int main()
+114 {
+115 try
+116 {
+117 //////////////////////
+118 // DEFINE VARIABLES //
+119 //////////////////////
+120 SimTK::Vec3 gravity(0,-9.8065, 0); // Model’ls gravity value
+121 //SimTK::Vec3 gravity(0); // Model’ls gravity value
+122 // Time simulation
+123 double initTime(0), endTime(40); // In seconds
+124
+125 //////////////////
+126 // CREATE MODEL //
+127 //////////////////
+128 Model osimPendulum;
+129 osimPendulum.setName("ControlDoublePendulum"); // Set the name of the model
+130 osimPendulum.setAuthors("D´ıdac Coll"); // Set the name of the author
+131 osimPendulum.setUseVisualizer(true);
+132 osimPendulum.setGravity(gravity);
+133
+134 // Get ground
+135 OpenSim::Body& ground = osimPendulum.getGroundBody();
+136 ground.addDisplayGeometry("checkered_floor.vtp");
+137
+138 ///////////////////
+139 // CREATE BODIES //
+140 ///////////////////
+141 // Define Mass properties, dimensions and inertia
+142 double cylinderMass = 0.5, cylinderLength = 2.5, cylinderDiameter = 0.30;
+143 SimTK::Vec3 cylinderDimensions(cylinderDiameter, cylinderLength, cylinderDiameter);
+144 SimTK::Vec3 cylinderMassCenter(0, cylinderLength/2, 0);
+145 SimTK::Inertia cylinderInertia = SimTK::Inertia::cylinderAlongY(cylinderDiameter/2.0,
+146 cylinderLength/2.0);
+147
+148 OpenSim::Body *firstCylinder = new OpenSim::Body("firstCylinder", cylinderMass, cylinderMassCenter,
+149 cylinderMass*cylinderInertia);
+150 // Set a graphical representation of the cylinder
+151 firstCylinder->addDisplayGeometry("cylinder.vtp");
+152 // Scale the grahical cylinder(1 m tall, 1 m diameter) to match with body’s dimensions
+153 GeometrySet& geometrySet = firstCylinder->updDisplayer()->updGeometrySet();
+154 DisplayGeometry& newDimCylinder = geometrySet[0];
+155 newDimCylinder.setScaleFactors(cylinderDimensions);
+156 newDimCylinder.setTransform(Transform(SimTK::Vec3(0.0, cylinderLength/2.0, 0.0)));
+157 // Add Sphere in Joint place
+158 firstCylinder->addDisplayGeometry("sphere.vtp");
+159 // Scale sphere
+160 geometrySet[1].setScaleFactors(SimTK::Vec3(0.5));
+161
+162
+163
+164 OpenSim::Body *secondCylinder = new OpenSim::Body(*firstCylinder);
+165 secondCylinder->setName("secondCylinder");
+166
+167 //Create block mass
+168 double blockMass = 100.0, blockSideLength = 1.0;
+169 SimTK::Vec3 blockMassCenter(0);
+170 SimTK::Inertia blockInertia = blockMass*SimTK::Inertia::brick(blockSideLength,
+171 blockSideLength,
+172 blockSideLength);
+173
+174 Body *block = new Body("block", blockMass, blockMassCenter, blockInertia);
+175 block->addDisplayGeometry("block.vtp");
+176 block->updDisplayer()->updGeometrySet()[0].setScaleFactors(SimTK::Vec3(5.0));
+177
+178 // Create 1 degree-of-freedom pin joints between ground, first cylinder, and second cyilinder
+179 // , weldjoint to attach block to second cyilinder
+180 SimTK::Vec3 orientationInGround(0), locationInGround(0),
+181 locationInParent(0.0, cylinderLength, 0.0),
+182 orientationInChild(0), locationInChild(0);
+183
+184 PinJoint *firstJoint = new PinJoint("firstJoint", ground, locationInGround,
+185 orientationInGround, *firstCylinder,
+186 locationInChild, orientationInChild);
+187 PinJoint *secondJoint = new PinJoint("secondJoint", *firstCylinder, locationInParent,
+188 orientationInChild, *secondCylinder,
+189 locationInChild, orientationInChild);
+190 WeldJoint *endPendulum = new WeldJoint("endPendulum", *secondCylinder,
+191 locationInParent, orientationInChild,
+192 *block, locationInChild, orientationInChild);
+193
+194 // Set range of joints coordinates
+195 double range[2] = {-SimTK::Pi*2, SimTK::Pi*2};
+196 // Get coordinate set of firstJoint
+197 CoordinateSet& fJointCoordinates = firstJoint->upd_CoordinateSet();
+198 fJointCoordinates[0].setName("q1");
+199 fJointCoordinates[0].setRange(range);
+200 // Get coordinate set of secondJoint
+201 CoordinateSet& sJointCoordinates = secondJoint->upd_CoordinateSet();
+202 sJointCoordinates[0].setName("q2");
+203 sJointCoordinates[0].setRange(range);
+204
+205 // Add Bodies
+206 osimPendulum.addBody(firstCylinder);
+207 osimPendulum.addBody(secondCylinder);
+208 osimPendulum.addBody(block);
+209
+210 // Creaate Actuators
+211 TorqueActuator* firstJointActuator = new TorqueActuator();
+212 firstJointActuator->setName("firstJointActuator");
+213 firstJointActuator->setBodyA(osimPendulum.getBodySet().get("firstCylinder"));
+214 firstJointActuator->setBodyB(osimPendulum.getGroundBody());
+215 firstJointActuator->setOptimalForce(20);
+216 firstJointActuator->setTorqueIsGlobal(false);
+217 TorqueActuator* secondJointActuator = new TorqueActuator();
+218 secondJointActuator->setName("secondJointActuator");
+219 secondJointActuator->setBodyA(osimPendulum.getBodySet().get("secondCylinder"));
+220 secondJointActuator->setBodyB(osimPendulum.getBodySet().get("firstCylinder"));
+221 secondJointActuator->setOptimalForce(20);
+222 secondJointActuator->setTorqueIsGlobal(false);
+223 // Add actuators as forces
+224 osimPendulum.addForce(firstJointActuator);
+225 osimPendulum.addForce(secondJointActuator);
+226
+227 // Add a controller
+228 PendulumController *pendControl = new PendulumController(0.0, 0.0);
+229 pendControl->setActuators(osimPendulum.updActuators());
+230 osimPendulum.addController(pendControl);
+231
+232 // Initialize system
+233 SimTK::State &si = osimPendulum.initSystem();
+234
+235 // Add frictions
+236 SimTK::MultibodySystem &system = osimPendulum.updMultibodySystem();
+237 SimTK::GeneralForceSubsystem &gForces = osimPendulum.updForceSubsystem();
+238 SimTK::Force::MobilityLinearDamper fricFirstJoint (gForces,
+239 osimPendulum.updMatterSubsystem().
+240 updMobilizedBody(SimTK::MobilizedBodyIndex(1)),
+241 SimTK::MobilizerUIndex(0),
+242 1);
+243
+244 SimTK::Force::MobilityLinearDamper fricSecondJoint (gForces,
+245 osimPendulum.updMatterSubsystem().
+246 updMobilizedBody(SimTK::MobilizedBodyIndex(2)),
+247 SimTK::MobilizerUIndex(0),
+248 1);
+249
+250 // Set Up Visualizer
+251 osimPendulum.updMatterSubsystem().setShowDefaultGeometry(true);
+252 SimTK::Visualizer& viz = osimPendulum.updVisualizer().updSimbodyVisualizer();
+253 viz.setBackgroundColor(SimTK::Black);
+254
+255 si = osimPendulum.initializeState();
+256 osimPendulum.printDetailedInfo(si, cout);
+257 // Define initial position of each joint
+258 double q1 = -SimTK::Pi;
+259 double q2 = -q1 + SimTK::Pi;
+260
+261 fJointCoordinates[0].setValue(si,q1);
+262 sJointCoordinates[0].setValue(si,q2);
+263
+264 osimPendulum.updMultibodySystem().realize(si, SimTK::Stage::Acceleration);
+265 // Set integrator
+266 SimTK::RungeKuttaMersonIntegrator integrator(osimPendulum.getMultibodySystem());
+267 Manager manager(osimPendulum, integrator);
+268 manager.setInitialTime(initTime); manager.setFinalTime(endTime);
+269 manager.integrate(si);
+270
+271 }
+272 catch(const OpenSim::Exception& exception)
+273 {
+274 cout << "Exception occured: " << exception.getMessage() << endl;
+275 return 1;
+276 }
+277
+278 return 0;
+279 }

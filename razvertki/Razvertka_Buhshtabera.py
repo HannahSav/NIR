@@ -1,0 +1,147 @@
+# Created by Hannah at 05.06.2024 14:14
+
+
+# метод разверток (пришлет ВЮ)
+# поиграть с параметрами (скользящие окна)
+
+import numpy as np
+import pandas as pd
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
+
+
+# Функция для отображения изначальных данных на разных графиках
+# def plot_columns_data_diff_plots(columns_data):
+#     if columns_data and 'X[s]' in columns_data:
+#         x_values = columns_data['X[s]']
+#
+#         plt.figure(figsize=(15, 10))
+#         plt.title('{}. Data Plot'.format(data_name))
+#
+#         for i, column_name in enumerate(columns_data.keys()):
+#             if column_name != 'X[s]' and columns_data[column_name] is not None:
+#                 plt.subplot(3, 2, i + 1)
+#                 plt.plot(x_values, columns_data[column_name], marker='o', markersize = 3, linestyle='-', label=column_name)
+#                 plt.title(column_name)
+#                 plt.xlabel('X[s]')
+#                 plt.ylabel('Value')
+#                 plt.legend()
+#                 plt.grid(True)
+#
+#         plt.tight_layout()
+#         plt.show()
+
+
+# Функция для отображения изначальных данных на одном графике
+def plot_columns_data_one_plot(columns_data, data_name):
+    if columns_data and 'X[s]' in columns_data:
+        x_values = columns_data['X[s]']
+
+        plt.figure(figsize=(15, 10))
+
+        for column_name in columns_data.keys():
+            if column_name != 'X[s]' and columns_data[column_name] is not None:
+                plt.plot(x_values, columns_data[column_name], marker='o', markersize=3, linestyle='-',
+                         label=column_name)
+
+        plt.title('{}. Data Plot'.format(data_name))
+        plt.xlabel('X[s]')
+        plt.ylabel('Value')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+def take_data(data_file, data_name):
+    column_names = ['X[s]', 'FDS galileo: dEMG.A 1', 'FDS galileo: dEMG.B 1', 'FDS galileo: dEMG.C 1', 'FDS galileo: dEMG.D 1', 'FDS avanti: EMG 2']
+    start = 0
+    stop = 15000
+    step = 50
+    data = pd.read_excel(data_file)
+    columns_data = {}
+    for column_name in column_names:
+        columns_data[column_name] = data[column_name].tolist()[start:stop:step]
+    plot_columns_data_one_plot(columns_data, data_name)
+    return columns_data
+
+
+# Заглучшка вместо данных
+def create_time_series(N):
+    t = np.linspace(0, 4 * np.pi, N)
+    return np.sin(t) + 0.5 * np.random.randn(N)
+
+
+# Формирование векторов размерности n
+def sliding_window(series, n):
+    return np.array([series[i:i + n] for i in range(len(series) - n + 1)])
+
+
+# Проекция на пространство меньшей размерности с помощью PCA
+def pca_projection(vectors, r):
+    pca = PCA(n_components=r)
+    return pca.fit_transform(vectors)
+
+# Визуализация проекций для r=2 или r=3
+def plot_projection(projections, r, data_name):
+    if r == 2:
+        plt.suptitle('{} on {} projections'.format(data_name, r))
+        plt.scatter(projections[:, 0], projections[:, 1])
+        plt.xlabel('PC1')
+        plt.ylabel('PC2')
+        plt.show()
+    elif r == 3:
+        fig = plt.figure()
+        plt.suptitle('{} on {} projections'.format(data_name, r))
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(projections[:, 0], projections[:, 1], projections[:, 2])
+        ax.set_xlabel('PC1')
+        ax.set_ylabel('PC2')
+        ax.set_zlabel('PC3')
+        plt.show()
+    else:
+        print("r слишком велик для визуализации. Посмотреть не получится. Придумай как оценить...")
+
+
+N = 200
+n = 10
+r = 3
+
+
+# # Создание временного ряда
+# time_series = create_time_series(N)
+
+# пальчики
+# Primus - 1
+# Secundus - 2
+# Medius - 3
+# Anularis - 4
+# Minimi - 5
+
+fingers_file_names = {
+    "Primus" : "Primus_flex_Rep_1.53.xlsx",
+    "Secundus" : "secundus_flex_Rep_1.32.xlsx",
+    "Medius" : "medius_flex_Rep_1.22.xlsx",
+    "Anularis" : "anularis_flex_Rep_1.12.xlsx",
+    "Minimi" : "minimi_flex_Rep_2.2.xlsx"
+}
+
+for finger, file in fingers_file_names.items():
+    # Чтение временного ряда
+    time_series_columns = take_data(data_file="anularis_flex_Rep_1.12.xlsx", data_name=finger)
+
+    # Формирование векторов
+    vector_columns = {}
+    for key, value in time_series_columns.items():
+        if key != 'X[s]':
+            vector_columns[key] = sliding_window(value, n)
+
+    # Проекция на r-мерное пространство
+    projections_columns = {}
+    for key, value in vector_columns.items():
+        projections_columns[key] = pca_projection(value, r)
+
+    # Визуализация проекций
+    for key, proj in projections_columns.items():
+        print(key)
+        plot_projection(proj, r, key)
+

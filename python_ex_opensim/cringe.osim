@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<OpenSimDocument Version="40000">
+	<Model name="Pendulum">
+		<!--Acceleration due to gravity, expressed in ground.-->
+		<gravity>0 -9.8064999999999998 0</gravity>
+		<!--Credits (e.g., model author names) associated with the model.-->
+		<credits>Hannah Savon</credits>
+	</Model>
+</OpenSimDocument>
