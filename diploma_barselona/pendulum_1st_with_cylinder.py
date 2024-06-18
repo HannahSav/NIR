@@ -36,7 +36,7 @@ model.addJoint(joint1)
 # Добавляем координату (Coordinate) для первого шарнира????
 coord1 = joint1.updCoordinate()
 coord1.setName("angle1")
-coord1.setDefaultValue(0.5)  # начальный угол в радианах
+coord1.setDefaultValue(0.0)  # начальный угол в радианах
 coord1.setRangeMin(-3.14)
 coord1.setRangeMax(3.14)
 
@@ -61,7 +61,7 @@ model.addJoint(joint2)
 # Добавляем координату (Coordinate) для первого шарнира????
 coord2 = joint2.updCoordinate()
 coord2.setName("angle2")
-coord2.setDefaultValue(0.5)  # начальный угол в радианах
+coord2.setDefaultValue(0.0)  # начальный угол в радианах
 coord2.setRangeMin(-3.14)
 coord2.setRangeMax(3.14)
 
@@ -88,7 +88,7 @@ model.addJoint(joint3)
 # Добавляем координату (Coordinate) для второго шарнира
 coord3 = joint3.updCoordinate()
 coord3.setName("angle3")
-coord3.setDefaultValue(0.5)  # начальный угол в радианах
+coord3.setDefaultValue(0.0)  # начальный угол в радианах
 coord3.setRangeMin(-3.14)
 coord3.setRangeMax(3.14)
 
@@ -96,6 +96,17 @@ coord3.setRangeMax(3.14)
 cube3 = osim.Brick(osim.Vec3(0.2))
 cube3.setColor(osim.Vec3(0, 0, 1))  # Задаем цвет для визуализации
 body3.attachGeometry(cube3)
+#_______________________________________________________________________
+
+actuatorJoint1 = osim.TorqueActuator()
+actuatorJoint1.setName("joint1 actuator")
+actuatorJoint1.setBodyA(model.getBodySet().get("body1"))
+actuatorJoint1.setBodyB(model.getBodySet().get("body2"))
+actuatorJoint1.setOptimalForce(20)
+
+
+
+
 
 # Инициализируем модель и создаем систему
 state = model.initSystem()
