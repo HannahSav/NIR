@@ -1,7 +1,9 @@
+# Created by Hannah at 18.06.2024 12:15
 import opensim as osim
 
 # Создаем пустую модель
 model = osim.Model()
+model.setUseVisualizer(True) # отображение в realtime
 model.setName("DoublePendulum")
 
 # Устанавливаем гравитацию
@@ -9,6 +11,7 @@ model.setGravity(osim.Vec3(0, -9.81, 0))
 
 # Создаем первое тело маятника
 body1 = osim.Body("body1", 1.0, osim.Vec3(0), osim.Inertia(1))
+# Body(<aName>, <aMass>, <aMassCenter>, <aInertia>)
 model.addBody(body1)
 
 # Создаем шарнир (Joint) для первого тела
@@ -17,11 +20,11 @@ joint1 = osim.PinJoint("joint1",
                        osim.Vec3(0, 0, 0),  # Location in parent
                        osim.Vec3(0, 0, 0),  # Orientation in parent
                        body1,  # Child body
-                       osim.Vec3(0, 1, 0),  # Location in child
+                       osim.Vec3(0, 0, 0),  # Location in child
                        osim.Vec3(0, 0, 0))  # Orientation in child
 model.addJoint(joint1)
 
-# Добавляем координату (Coordinate) для первого шарнира
+# Добавляем координату (Coordinate) для первого шарнира????
 coord1 = joint1.updCoordinate()
 coord1.setName("angle1")
 coord1.setDefaultValue(0.1)  # начальный угол в радианах
@@ -29,9 +32,9 @@ coord1.setRangeMin(-3.14)
 coord1.setRangeMax(3.14)
 
 # Добавляем геометрический объект для визуализации первого тела
-sphere1 = osim.Sphere(0.05)
-sphere1.setColor(osim.Vec3(1, 0, 0))  # Задаем цвет для визуализации
-body1.attachGeometry(sphere1)
+sphere1 = osim.Sphere(0.05) # размер фигуры
+sphere1.setColor(osim.Vec3(0, 0, 0))  # цвет фигуры
+body1.attachGeometry(sphere1) # добавили фигуру
 
 # Создаем второе тело маятника
 body2 = osim.Body("body2", 1.0, osim.Vec3(0), osim.Inertia(1))
@@ -66,7 +69,7 @@ state = model.initSystem()
 manager = osim.Manager(model)
 manager.initialize(state)
 
-# Запускаем симуляцию на 5 секунд
+# Запускаем симуляцию на 25 секунд
 final_time = 25.0
 state.setTime(0)
 manager.integrate(final_time)

@@ -32,7 +32,7 @@
 							<!--Default appearance attributes for this Geometry-->
 							<Appearance>
 								<!--The color, (red, green, blue), [0, 1], used to display the geometry. -->
-								<color>1 0 0</color>
+								<color>0 0 0</color>
 							</Appearance>
 							<!--Radius of sphere, defaults to 1.0-->
 							<radius>0.050000000000000003</radius>
@@ -122,7 +122,7 @@
 							<!--Path to a Component that satisfies the Socket 'parent' of type C (description: The parent frame to this frame.).-->
 							<socket_parent>/bodyset/body1</socket_parent>
 							<!--Translational offset (in meters) of this frame's origin from the parent frame's origin, expressed in the parent frame.-->
-							<translation>0 1 0</translation>
+							<translation>0 0 0</translation>
 							<!--Orientation offset (in radians) of this frame in its parent frame, expressed as a frame-fixed x-y-z rotation sequence.-->
 							<orientation>0 0 0</orientation>
 						</PhysicalOffsetFrame>

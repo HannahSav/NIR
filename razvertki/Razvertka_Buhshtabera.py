@@ -55,7 +55,8 @@ def plot_columns_data_one_plot(columns_data, data_name):
 def take_data(data_file, data_name):
     column_names = ['X[s]', 'FDS galileo: dEMG.A 1', 'FDS galileo: dEMG.B 1', 'FDS galileo: dEMG.C 1', 'FDS galileo: dEMG.D 1', 'FDS avanti: EMG 2']
     start = 0
-    stop = 9000 # почему при 10-15к соединяются?? разное количество измерений....
+    # stop = 9000 # почему при 10-15к соединяются?? разное количество измерений....
+    stop = 15550
     step = 50
     data = pd.read_excel(data_file)
     columns_data = {}
@@ -154,19 +155,21 @@ r = 3
 # Anularis - 4
 # Minimi - 5
 
+add_path = 'src/'
+
 fingers_file_names = {
-    "Primus" : "Primus_flex_Rep_1.53.xlsx",
-    "Secundus" : "secundus_flex_Rep_1.32.xlsx",
-    "Medius" : "medius_flex_Rep_1.22.xlsx",
-    "Anularis" : "anularis_flex_Rep_1.12.xlsx",
-    "Minimi" : "minimi_flex_Rep_2.2.xlsx"
+    # "Primus" : "Primus_flex_Rep_1.53.xlsx",
+    # "Secundus" : "secundus_flex_Rep_1.32.xlsx",
+    # "Medius" : "medius_flex_Rep_1.22.xlsx",
+    "Anularis" : "anularis_flex_Rep_1.12.xlsx"
+    # "Minimi" : "minimi_flex_Rep_2.2.xlsx"
 }
 
 projections_columns = {}
 
 for finger, file in fingers_file_names.items():
     # Чтение временного ряда
-    time_series_columns = take_data(data_file=file, data_name=finger)
+    time_series_columns = take_data(data_file=add_path + file, data_name=finger)
 
     # Формирование векторов
     vector_columns = {}
