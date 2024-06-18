@@ -4,10 +4,10 @@ import opensim as osim
 # Создаем пустую модель
 model = osim.Model()
 model.setUseVisualizer(True) # отображение в realtime
-model.setName("DoublePendulum")
+model.setName("SimplePendulum")
 
 # Устанавливаем гравитацию
-model.setGravity(osim.Vec3(0, -9.81, 0))
+model.setGravity(osim.Vec3(0, -9.8065, 0))
 
 # Создаем первое тело маятника
 body1 = osim.Body("body1", 1.0, osim.Vec3(0), osim.Inertia(1))
@@ -70,7 +70,7 @@ manager = osim.Manager(model)
 manager.initialize(state)
 
 # Запускаем симуляцию на 25 секунд
-final_time = 25.0
+final_time = 10.0
 state.setTime(0)
 manager.integrate(final_time)
 
@@ -78,4 +78,4 @@ manager.integrate(final_time)
 print(f"Final state: {state}")
 
 # Сохраняем модель и состояние
-model.printToXML("double_pendulum_model.osim")
+model.printToXML("simple_pendulum_model.osim")
