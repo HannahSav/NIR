@@ -140,51 +140,53 @@ def plot_projection_diff_plots(projections_dict, r, data_name):
 #     else:
 #         print("r слишком велик для визуализации. Посмотреть не получится. Придумай как оценить...")
 
-N = 200
-n = 10
-r = 3
+if __name__ == '__main__':
+
+    N = 200
+    n = 100
+    r = 3
 
 
-# # Создание временного ряда
-# time_series = create_time_series(N)
+    # # Создание временного ряда
+    # time_series = create_time_series(N)
 
-# пальчики
-# Primus - 1
-# Secundus - 2
-# Medius - 3
-# Anularis - 4
-# Minimi - 5
+    # пальчики
+    # Primus - 1
+    # Secundus - 2
+    # Medius - 3
+    # Anularis - 4
+    # Minimi - 5
 
-add_path = 'src/'
+    add_path = 'resources/'
 
-fingers_file_names = {
-    # "Primus" : "Primus_flex_Rep_1.53.xlsx",
-    # "Secundus" : "secundus_flex_Rep_1.32.xlsx",
-    # "Medius" : "medius_flex_Rep_1.22.xlsx",
-    "Anularis" : "anularis_flex_Rep_1.12.xlsx"
-    # "Minimi" : "minimi_flex_Rep_2.2.xlsx"
-}
+    fingers_file_names = {
+        "Primus" : "Primus_flex_Rep_10.62.xlsx",
+        "Secundus" : "secundus_flex_Rep_2.33.xlsx",
+        "Medius" : "medius_flex_Rep_1.22.xlsx",
+        "Anularis" : "anularis_flex_Rep_1.12.xlsx",
+        "Minimi" : "minimi_flex_Rep_2.2.xlsx"
+    }
 
-projections_columns = {}
+    projections_columns = {}
 
-for finger, file in fingers_file_names.items():
-    # Чтение временного ряда
-    time_series_columns = take_data(data_file=add_path + file, data_name=finger)
+    for finger, file in fingers_file_names.items():
+        # Чтение временного ряда
+        time_series_columns = take_data(data_file=add_path + file, data_name=finger)
 
-    # Формирование векторов
-    vector_columns = {}
-    for key, value in time_series_columns.items():
-        if key != 'X[s]':
-            vector_columns[key] = sliding_window(value, n)
+        # Формирование векторов
+        vector_columns = {}
+        for key, value in time_series_columns.items():
+            if key != 'X[s]':
+                vector_columns[key] = sliding_window(value, n)
 
-    # Проекция на r-мерное пространство
-    for key, value in vector_columns.items():
-        if key not in projections_columns.keys():
-            projections_columns[key] = {}
-        projections_columns[key][finger] = pca_projection(value, r)
+        # Проекция на r-мерное пространство
+        for key, value in vector_columns.items():
+            if key not in projections_columns.keys():
+                projections_columns[key] = {}
+            projections_columns[key][finger] = pca_projection(value, r)
 
-# Визуализация проекций
-for key, fingers in projections_columns.items():
-    print(key)
-    plot_projection_diff_plots(fingers, r, key)
+    # Визуализация проекций
+    for key, fingers in projections_columns.items():
+        print(key)
+        plot_projection_diff_plots(fingers, r, key)
 
