@@ -1,24 +1,25 @@
 # Created by Hannah at 16.07.2024 20:13
-
+import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+import math
 import neurokit2 as nk
 
 
-def plot_columns_data_one_plot(columns_data, data_name):
+def plot_columns_data_one_plot(columns_data, time, data_name):
     '''
     Строит все линии ЭМГ
     :param columns_data: dict{'data_name':'List[float]}
     :param data_name: название графа
     :return: None
     '''
-    if columns_data and 'X[s]' in columns_data:
-        x_values = columns_data['X[s]']
+    if columns_data:
+        x_values = time
 
         plt.figure(figsize=(12, 6))
 
         for column_name in columns_data.keys():
-            if column_name != 'X[s]' and columns_data[column_name] is not None:
+            if columns_data[column_name] is not None:
                 plt.plot(x_values, columns_data[column_name], marker='o', markersize=3, linestyle='-',
                          label=column_name, alpha = 0.5)
 
@@ -38,9 +39,11 @@ Creating start graphics
 def create_old_graphics(data_file, data_name, column_names):
     data = pd.read_excel(data_file)
     columns_data = {}
+    time = data['X[s]'].tolist()
     for column_name in column_names:
-        columns_data[column_name] = data[column_name].tolist()[1700:2800:5]
-    plot_columns_data_one_plot(columns_data, data_name)
+        if column_name != 'X[s]':
+            columns_data[column_name] = data[column_name].tolist()#[1700:2800:5]
+    plot_columns_data_one_plot(columns_data, time, data_name)
     return columns_data
 
 
@@ -54,32 +57,108 @@ def take_data(data_file, data_name, column_names):
     :param column_names: List[str] названия колонок
     :return: List[float] Данные после чтения
     '''
-    def creating_emg_amplitude(data_column):
+    def move_to_isoline(data_column):
         '''
-        Функция для выделения амплитуды.Пока неправильная
+        Функция для сдвига к изолинии
+        :param data_column: List[float] изначальные данные ЭМГ
+        :return: сдвинутые данные ЭМГ
+        '''
+        mean = np.mean(data_column)
+        for i in range(len(data_column)):
+            data_column[i] -= mean
+        return data_column
+
+    def choose_best_line():
+        num = input("Which line was more important (0-7) :").split()[0]
+        while num not in ['0', '1', '2', '3', '4', '5', '6', '7']:
+            num = input('Try again: ').split()
+            print(num)
+        return int(num)
+
+    # def creating_emg_amplitude_abs(data_column):
+    #     '''
+    #     просто модуль
+    #
+    #     Функция для выделения амплитуды.Пока неправильная
+    #     :param data_column: List[float] изначальные данные
+    #     :return: List[float] данные после выделения амплитуды
+    #     '''
+    #     new_data_column = []
+    #     for i in range(len(data_column) - 1):
+    #         # new_data_column.append(abs(data_column[i] - data_column[i + 1]))
+    #         new_data_column.append(abs(data_column[i]))
+    #     return new_data_column
+    def creating_emg_amplitude_pos_neg(data_column, time):
+        '''
+        Искать минимум в отрицательном и максимум в положительном
+
+        Функция для выделения амплитуды. Через соседей меньше больше
         :param data_column: List[float] изначальные данные
-        :return: List[float] данные после выделения амплитуды
+        :param time: List[float] моменты времени
+        :return: List[float] data данные после выделения амплитуды
+        :return: List[float] time временные точки, после нарезки
+
         '''
         new_data_column = []
-        for i in range(len(data_column) - 1):
-            # new_data_column.append(abs(data_column[i] - data_column[i + 1]))
-            new_data_column.append(abs(data_column[i]))
-        return new_data_column
+        new_time = []
+        if_positive = data_column[0]
+        i = 0
+        while i < len(data_column):
+            best = 0
+            best_i = 0
+            if data_column[i] * if_positive < 0:
+                if_positive *= -1
+                new_data_column.append(best)
+                new_time.append(time[best_i])
+            elif abs(data_column[i]) > best:
+                best = abs(data_column[i])
+                best_i = i
+            i+=1
+        print("like made")
+        return new_data_column, new_time
+
+
+    # def creating_emg_amplitude_with_diff(data_column):
+    #     '''
+    #     Разница между макс минами(как creating_emg_amplitude_pos_neg но с разницей)
+    #
+    #     Функция для выделения амплитуды. Через соседей меньше больше
+    #     :param data_column: List[float] изначальные данные
+    #     :return: List[float] данные после выделения амплитуды
+    #
+    #     '''
+    #     new_data_column = []
+    #     new_data_column.append(data_column[0])
+    #     # for i in range(1, len(data_column) - 1):
+    #         # if data[i] > data[]
+    #     # return new_data_column
+
+
+    #take data
+
 
     data = pd.read_excel(data_file)
+
+    #for start data, for prepared data
     columns_data = {}
     columns_data_new = {}
+    time = data['X[s]'].tolist()[120:-140]
+
+    #painting start (before find isolines)
     for column_name in column_names:
-        columns_data[column_name] = data[column_name].tolist()[1500:2550]
         if column_name != 'X[s]':
-            columns_data_new[column_name] = creating_emg_amplitude(data[column_name].tolist())[1500:1550]
-        else:
-            columns_data_new[column_name] = columns_data[column_name]
-        print(columns_data[column_name])
-        print(columns_data_new[column_name])
-    plot_columns_data_one_plot(columns_data, data_name)
-    plot_columns_data_one_plot(columns_data_new, data_name)
-    return columns_data
+            columns_data[column_name] = data[column_name].tolist()[120:-140]
+    plot_columns_data_one_plot(columns_data, time, "START DATA.\n" + data_name)
+
+    #after found isolines
+    for column_name, data in columns_data.items():
+        columns_data_new[column_name] = move_to_isoline(data_column=data)
+    # print(columns_data_new)
+    plot_columns_data_one_plot(columns_data_new, time, "AFTER MOVING ISOLINE.\n" + data_name)
+
+    # Наиболее значимый датчик (на что ориенируемся?)
+    best_line = choose_best_line()
+
 
 if __name__ == '__main__':
     # столбцы из xslx, которые нам надо
