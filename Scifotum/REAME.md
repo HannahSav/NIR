@@ -44,6 +44,9 @@ ___
 
 После:
 ![img_1.png](img/after_reiso.png)
+![img_1.png](img/img_1.png)
 
 После поиска максимумов в + и  в -.... Ну не очень гладкая...
-![img.png](img.png)
+![img.png](img/img.png)
+![img_2.png](img/img_2.png)
+

@@ -162,24 +162,22 @@ def take_data(data_file, data_name, column_names):
 
     #after found isolines
     for column_name, data in columns_data.items():
-        if column_name != 'Avanti sensor 3 - palmaris longus: EMG 3':
-            columns_data_new[column_name] = np.zeros(1000)
+        if column_name !=  'Avanti sensor 1 - brachioradialis: EMG 1':
+            columns_data_new[column_name] = np.zeros(len(time))
         else:
-            columns_data_new[column_name] = move_to_isoline(data)[2500:3500]
+            columns_data_new[column_name] = move_to_isoline(data)
 
-        columns_data_new[column_name] = interpolate.interp1d(columns_data_new[column_name], time[:1000], kind="linear")
+        # columns_data_new[column_name] = interpolate.interp1d(columns_data_new[column_name], time[:1500], kind="linear")
     # print(columns_data_new)
-    plot_columns_data_one_plot(columns_data_new, time[:1000], "AFTER MOVING ISOLINE.\n" + data_name)
+    plot_columns_data_one_plot(columns_data_new, time, "AFTER MOVING ISOLINE.\n" + data_name)
 
     # Наиболее значимый датчик (на что ориенируемся?)
     best_line = choose_best_line()
 
     for column_name, data in columns_data_new.items():
-        if column_name != 'Avanti sensor 3 - palmaris longus: EMG 3':
-            columns_data_new[column_name] = np.zeros(1000)
-        else:
+        if column_name ==  'Avanti sensor 1 - brachioradialis: EMG 1':
             columns_data_new[column_name] = creating_emg_amplitude_pos_neg(data)
-    plot_columns_data_one_plot(columns_data_new, time[:1000], "AFTER CREATING EMG AMPLITUDE.\n"+data_file)
+    plot_columns_data_one_plot(columns_data_new, time, "AFTER CREATING EMG AMPLITUDE.\n"+data_file)
 
 
 if __name__ == '__main__':
