@@ -49,4 +49,5 @@ ___
 После поиска максимумов в + и  в -.... Ну не очень гладкая...
 ![img.png](img/img.png)
 ![img_2.png](img/img_2.png)
+![full](img/full_amplitude.png)
 

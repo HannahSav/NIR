@@ -113,7 +113,6 @@ def take_data(data_file, data_name, column_names):
                 best_i = i
             elif data_column[i] * if_positive < 0:
                 if_positive *= -1
-                print(best_i, prev_best, (best_i - prev_best))
                 step = (new_data_column[best_i] - new_data_column[prev_best]) / (best_i - prev_best)
                 for j in range(prev_best + 1, best_i):
                     new_data_column[j] = new_data_column[j - 1] + step
@@ -162,10 +161,10 @@ def take_data(data_file, data_name, column_names):
 
     #after found isolines
     for column_name, data in columns_data.items():
-        if column_name !=  'Avanti sensor 1 - brachioradialis: EMG 1':
-            columns_data_new[column_name] = np.zeros(len(time))
-        else:
-            columns_data_new[column_name] = move_to_isoline(data)
+        # if column_name !=  'Avanti sensor 1 - brachioradialis: EMG 1':
+        #     columns_data_new[column_name] = np.zeros(len(time))
+        # else:
+        columns_data_new[column_name] = move_to_isoline(data)
 
         # columns_data_new[column_name] = interpolate.interp1d(columns_data_new[column_name], time[:1500], kind="linear")
     # print(columns_data_new)
@@ -175,8 +174,8 @@ def take_data(data_file, data_name, column_names):
     best_line = choose_best_line()
 
     for column_name, data in columns_data_new.items():
-        if column_name ==  'Avanti sensor 1 - brachioradialis: EMG 1':
-            columns_data_new[column_name] = creating_emg_amplitude_pos_neg(data)
+        # if column_name ==  'Avanti sensor 1 - brachioradialis: EMG 1':
+        columns_data_new[column_name] = creating_emg_amplitude_pos_neg(data)
     plot_columns_data_one_plot(columns_data_new, time, "AFTER CREATING EMG AMPLITUDE.\n"+data_file)
 
 
