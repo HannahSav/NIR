@@ -2,6 +2,7 @@
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from scipy import interpolate
 import math
 import neurokit2 as nk
 
@@ -88,7 +89,7 @@ def take_data(data_file, data_name, column_names):
     #         # new_data_column.append(abs(data_column[i] - data_column[i + 1]))
     #         new_data_column.append(abs(data_column[i]))
     #     return new_data_column
-    def creating_emg_amplitude_pos_neg(data_column, time):
+    def creating_emg_amplitude_pos_neg(data_column):
         '''
         Искать минимум в отрицательном и максимум в положительном
 
@@ -100,22 +101,27 @@ def take_data(data_file, data_name, column_names):
 
         '''
         new_data_column = []
-        new_time = []
         if_positive = data_column[0]
         i = 0
+        prev_best = 0
+        best_i = 0
+        best = 0
         while i < len(data_column):
-            best = 0
-            best_i = 0
-            if data_column[i] * if_positive < 0:
-                if_positive *= -1
-                new_data_column.append(best)
-                new_time.append(time[best_i])
-            elif abs(data_column[i]) > best:
+            new_data_column.append(abs(data_column[i]))
+            if abs(data_column[i]) >= best:
                 best = abs(data_column[i])
                 best_i = i
-            i+=1
+            elif data_column[i] * if_positive < 0:
+                if_positive *= -1
+                print(best_i, prev_best, (best_i - prev_best))
+                step = (new_data_column[best_i] - new_data_column[prev_best]) / (best_i - prev_best)
+                for j in range(prev_best + 1, best_i):
+                    new_data_column[j] = new_data_column[j - 1] + step
+                prev_best = best_i
+                best = 0
+            i += 1
         print("like made")
-        return new_data_column, new_time
+        return new_data_column
 
 
     # def creating_emg_amplitude_with_diff(data_column):
@@ -139,25 +145,41 @@ def take_data(data_file, data_name, column_names):
 
     data = pd.read_excel(data_file)
 
+    # нули в начале и в конце записи (не изолиния, а именно нули!!!!)
+    START_NO_ZEROS = 120
+    STOP_NO_ZEROS = -140
+
     #for start data, for prepared data
     columns_data = {}
     columns_data_new = {}
-    time = data['X[s]'].tolist()[120:-140]
+    time = data['X[s]'].tolist()[START_NO_ZEROS:STOP_NO_ZEROS]
 
     #painting start (before find isolines)
     for column_name in column_names:
         if column_name != 'X[s]':
-            columns_data[column_name] = data[column_name].tolist()[120:-140]
+            columns_data[column_name] = data[column_name].tolist()[START_NO_ZEROS:STOP_NO_ZEROS]
     plot_columns_data_one_plot(columns_data, time, "START DATA.\n" + data_name)
 
     #after found isolines
     for column_name, data in columns_data.items():
-        columns_data_new[column_name] = move_to_isoline(data_column=data)
+        if column_name != 'Avanti sensor 3 - palmaris longus: EMG 3':
+            columns_data_new[column_name] = np.zeros(1000)
+        else:
+            columns_data_new[column_name] = move_to_isoline(data)[2500:3500]
+
+        columns_data_new[column_name] = interpolate.interp1d(columns_data_new[column_name], time[:1000], kind="linear")
     # print(columns_data_new)
-    plot_columns_data_one_plot(columns_data_new, time, "AFTER MOVING ISOLINE.\n" + data_name)
+    plot_columns_data_one_plot(columns_data_new, time[:1000], "AFTER MOVING ISOLINE.\n" + data_name)
 
     # Наиболее значимый датчик (на что ориенируемся?)
     best_line = choose_best_line()
+
+    for column_name, data in columns_data_new.items():
+        if column_name != 'Avanti sensor 3 - palmaris longus: EMG 3':
+            columns_data_new[column_name] = np.zeros(1000)
+        else:
+            columns_data_new[column_name] = creating_emg_amplitude_pos_neg(data)
+    plot_columns_data_one_plot(columns_data_new, time[:1000], "AFTER CREATING EMG AMPLITUDE.\n"+data_file)
 
 
 if __name__ == '__main__':
