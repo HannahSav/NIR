@@ -300,9 +300,9 @@ if __name__ == '__main__':
             "nikita": ["1.10", "2.11", "3.12", "4.13"], #  emg 6,5,4      3, 7 hold
         },
     }
-    for gesture in range(3, 4):
+    for gesture in range(1, 2):
         for men, rep_arr in mens_files[gesture].items():
-            if men == "kate":
+            if True:#men == "kate":
                 for r in rep_arr:
                     filepath = f"resources/{gesture}/{gesture}_gesture_{men}_Plot_and_Store_Rep_{r}.xlsx"
                     # # Которая раньше чето строила

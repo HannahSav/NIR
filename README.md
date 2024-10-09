@@ -12,3 +12,8 @@
 [презентация НИР](https://www.canva.com/design/DAGEiKEYYeM/IqGvbq37UT4gWMFQFpR92A/edit?utm_content=DAGEiKEYYeM&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
   
 [notion (литобзор, видосы, формулы)](https://www.notion.so/21bd33d5fdae446087f1b12d1938f162?pvs=4)
+
+НАУЧ - ВЮ САЛАМАТОВА
+ОПЕНСИМ - АС ЮРОВА
+БУХШТАББЕР - ЮВ ВАСИЛЕВСКИЙ
+

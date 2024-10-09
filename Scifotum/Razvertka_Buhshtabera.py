@@ -144,7 +144,7 @@ def plot_projection_diff_plots(projections_dict, r, data_name):
 if __name__ == '__main__':
 
     N = 200 # эт вообще не используется
-    n = 100
+    n = 50
     r = 3
 
 
@@ -158,7 +158,7 @@ if __name__ == '__main__':
     # Anularis - 4
     # Minimi - 5
 
-    add_path = 'data/'
+    add_path = 'data/kate/'
 
     fingers_file_names = {
         "1st_move":"1st_move_kate_1_2.3.xlsx",
@@ -167,6 +167,11 @@ if __name__ == '__main__':
         "hold_fist":"hold_fist_kate_3_1.11.xlsx",
         "rest":"rest_kate_1_2.3.xlsx"
     }
+    # fingers_file_names = {
+    #     "1st_move_1":"1st_move_kate_1_2.3.xlsx",
+    #     "1st_move_2":"1st_move_kate_1_3.4.xlsx",
+    #     "1st_move_3":"1st_move_kate_1_4.5.xlsx"
+    # }
 
     projections_columns = {}
 
