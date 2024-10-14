@@ -1,6 +1,7 @@
 from tkinter import messagebox
 
 import numpy as np
+import neurokit2 as nk
 
 def process_data(columns_data, time_data):
     """
@@ -42,9 +43,6 @@ def process_data(columns_data, time_data):
         columns_data[key] = emg_data_normalized[i].tolist()
 
     return columns_data, time_data
-
-
-import neurokit2 as nk
 
 
 def smooth_emg(columns_data, time_data, smoothing_window=50):
