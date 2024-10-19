@@ -189,10 +189,12 @@ if __name__ == '__main__':
         for key, value in vector_columns.items():
             if key not in projections_columns.keys():
                 projections_columns[key] = {}
+            print("key", key, "value:", value)
             projections_columns[key][finger] = pca_projection(value, r)
 
     # Визуализация проекций
     for key, fingers in projections_columns.items():
         print(key)
+        print(fingers)
         plot_projection_diff_plots(fingers, r, key)
 

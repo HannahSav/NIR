@@ -2,6 +2,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+# from Buhshtabera import pca_projection, sliding_window
+
 
 from tkinter import filedialog, messagebox, ttk
 
@@ -92,7 +94,6 @@ def show_plot_emg_for_view(columns_data, time, data_name):
 
         plt.show()
 
-
 def show_heatmap_emg(columns_data, time, data_name):
     '''
     Строит тепловую карту для данных ЭМГ
@@ -120,14 +121,70 @@ def show_heatmap_emg(columns_data, time, data_name):
         plt.grid(False)
         plt.show()
 
+def view_buhshtaber(data_dict, plot_name, prog0, prog1):
+    '''
+    :param data: dict of dicts(emg) of the same gesture of different
+    :param plot_name: plot name
+    :return:
+    '''
+    num_plot_set = len(data_dict)
+    num_lines = len(data_dict[list(data_dict.keys())[0]])
+    colors = plt.cm.viridis(np.linspace(0, 1, num_lines))
+    fig, axs = plt.subplots(num_plot_set, num_lines, figsize=(15, 5))
+    plt.suptitle('{} on {} and {} projection'.format(plot_name, 'PC'+str(prog0+1), 'PC'+str(prog1+1)))
+    for j, (gesture, g_data) in enumerate(data_dict.items()):
+        for i, (emg, projections) in enumerate(g_data.items()):
+            axs[j][i].scatter(projections[:, prog0], projections[:, prog1], color=colors[i], s=20, alpha=0.75)
+            # Draw lines connecting points
+            axs[j][i].plot(projections[:, prog0], projections[:, prog1], color='black', alpha=0.5)
+            if j == 0:
+                axs[j][i].set_title(emg)
+            if j == num_plot_set-1:
+                axs[j][i].set_xlabel('PC'+str(prog0+1))
+            if i == 0:
+                axs[j][i].set_ylabel(gesture+'\n'+'PC'+str(prog1+1))
+            # else:
+            #     axs[j][i].set_ylabel('PC'+str(prog1+1))
+    plt.show()
+
 
 if __name__ == "__main__":
+    # data = {
+    #     "g1":[1, 3, 5, 3, 1, 5, 4, 3, 2, 3, 2, 1, 2, 3, 4, -5],
+    #     "g2":[-2, 3, 1, 3, 2, 5, 4, 3, 2, 3, 2, 1, 2, 3, 4, -5],
+    #     "g3":[1,2, 3, 4, 1, 5, 4, 3, 2, 3, 2, 1, 2, 3, 4, -5],
+    #     "g4":[0, 0, 1, 1,-1, 5, 4, 3, 2, 3, 2, 1, 2, 3, 4, -5],
+    # }
+    # time = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+    # tit = "dghjk"
+    # show_heatmap_emg(data, time, tit)
+
+    print(pca_projection(sliding_window([1, 2, 3, 1, 2,1 ], 4), 3))
     data = {
-        "g1":[1, 3, 5, 3, 1, 5, 4, 3, 2, 3, 2, 1, 2, 3, 4, -5],
-        "g2":[-2, 3, 1, 3, 2, 5, 4, 3, 2, 3, 2, 1, 2, 3, 4, -5],
-        "g3":[1,2, 3, 4, 1, 5, 4, 3, 2, 3, 2, 1, 2, 3, 4, -5],
-        "g4":[0, 0, 1, 1,-1, 5, 4, 3, 2, 3, 2, 1, 2, 3, 4, -5],
+        "m1": {
+            'g1':pca_projection(sliding_window([1, 2, 3, 1, 2,1 ], 4), 3),
+            'g2': pca_projection(sliding_window([1, 253, 1, 3, 1, 2, 1], 4), 3),
+            'g3': pca_projection(sliding_window([1, 2, 3,32, 1, 2], 4), 3)
+        },
+        "m2": {
+            'g1':pca_projection(sliding_window([4, 3, 2, 4, 1, 3], 4), 3),
+            'g2': pca_projection(sliding_window([1, 25, 3, 4 ,3 , 2, 1], 4), 3),
+            'g3': pca_projection(sliding_window([1, 2,6, 2, 4, 1, 2], 4), 3)
+        },
     }
-    time = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-    tit = "dghjk"
-    show_heatmap_emg(data, time, tit)
+    # data = {
+    #     "movie1":{
+    #         "1":[[1,2, 3], [2, 1, 2], [2, 2, 2]],
+    #         "2":[[2,4, 3], [2, 5, 4], [1, 1, 2]]
+    #     },
+    #     "movie2": {
+    #         "1": [[2, 1, 1], [2, 4, 3], [2, 1, 2]],
+    #         "2": [[2, 1, 1], [2, 4, 3], [1, 21, 2]]
+    #     },
+    #     "movie3": {
+    #         "1": [[2, 1, 1], [2, 4, 3], [9, 1, 2]],
+    #         "2": [[6, 1, 4], [2, 2, 3], [3, 1, 2]]
+    #     }
+    # }
+    name = "buhshtaber_test"
+    view_buhshtaber(data, name, 0, 1)

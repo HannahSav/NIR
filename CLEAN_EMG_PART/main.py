@@ -51,7 +51,7 @@ def save_intervals(columns_data, time_data, start, end, person_id, gesture_id, f
         "data": filtered_columns_data
     }
 
-    save_dir = "cutted_data"
+    save_dir = "cutted_data/raw2"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -176,9 +176,18 @@ entry_interval_end = tk.Entry(root, width=10)
 entry_interval_end.grid(row=3, column=2, padx=5, pady=5)
 
 # Словари для выбора человека и жеста
-person_options = {"1": "dmitri", "2": "kate", "3": "kirill", "4": "maxim", "5": "nikita"}
-gesture_options = {"0": "rest", "1": "hold_fist", "2": "flexing_fist",
-                   "3": "extension_fist", "4": "flexing_big_finger"}
+current_dir = os.path.dirname(os.path.abspath(__file__))
+person_file_path = os.path.join(current_dir, 'like_static_db/persons.json')
+gesture_file_path = os.path.join(current_dir, 'like_static_db/gestures.json')
+
+with open(person_file_path, 'r', encoding='utf-8') as file:
+    person_options = json.load(file)
+# person_options = {"1": "dmitri", "2": "kate", "3": "kirill", "4": "maxim", "5": "nikita"}
+
+with open(gesture_file_path, 'r', encoding='utf-8') as file:
+    gesture_options = json.load(file)
+# gesture_options = {"0": "rest", "1": "hold_fist", "2": "flexing_fist",
+#                    "3": "extension_fist", "4": "flexing_big_finger"}
 
 # Выпадающие меню для выбора человека и жеста
 label_person = tk.Label(root, text="Выберите человека:")
