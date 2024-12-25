@@ -7,7 +7,6 @@ from helper_viewer import view_buhshtaber
 
 from sklearn.decomposition import PCA
 
-
 avanty_dict = {
     'Avanti sensor 1 - brachioradialis: EMG 1' : 'emg 1',
     'Avanti sensor 2: EMG 2':'emg 2',
@@ -27,11 +26,13 @@ def pca_projection(vectors, r=3):
     pca = PCA(n_components=r)
     return pca.fit_transform(vectors)
 
-
-N_slises = 100
-r = 2
+# snaps = 100 # сколько точек отстроить
+skip = 2 # сколько пропускать
+N_slises = 150
+r = 4
 prog0 = 0
 prog1 = 1
+# prog2 = 3
 
 def same_from_one_file(file):
     full_dict = {}
@@ -47,11 +48,12 @@ def same_from_one_file(file):
 
         for k, v in my_dict.items():
             # 100 1-4
-            my_dict[k] = pca_projection(sliding_window(v, N_slises), r)
+            # my_dict[k] = pca_projection(sliding_window(v[::len(v)//snaps], N_slises), r)
+            my_dict[k] = pca_projection(sliding_window(v[::skip], N_slises), r)
         set_name = d['file_name'][: 2]+d['file_name'][-13: -5]
         full_dict[set_name] = my_dict
         # print(d['data'].keys())
-    view_buhshtaber(full_dict, plot_name+'\n N={} r={} projections: pc{},pc{}'.format(N_slises, r, prog0, prog1), prog0, prog1)
+    view_buhshtaber(full_dict, plot_name+'\n N={} r={} projections: pc{},pc{}'.format(N_slises, r, prog0, prog1), prog0, prog1, 2, 2)
 
 def diff_files(files):
     full_dict = {}
@@ -66,10 +68,13 @@ def diff_files(files):
 
         for k, v in my_dict.items():
             # 100 1-4
-            my_dict[k] = pca_projection(sliding_window(v, N_slises), r)
+            # my_dict[k] = pca_projection(sliding_window(v[::len(v)//snaps], N_slises), r)
+            my_dict[k] = pca_projection(sliding_window(v[::skip], N_slises), r)
         set_name = d['file_name'][: 2]+d['file_name'][-13: -5]
         full_dict[set_name] = my_dict
-    view_buhshtaber(full_dict, plot_name+'\n N={} r={} projections: pc{},pc{}'.format(N_slises, r, prog0, prog1), prog0, prog1)
+    view_buhshtaber(full_dict, plot_name+'\n N={} r={} projections: pc{},pc{}'.format(N_slises, r, prog0, prog1), prog0, prog1, 2, 2)
+
+
 def buhshtabera():
     print("SAME")
     data_to_plot = {}

@@ -29,7 +29,7 @@ def parse_xlsx(file_path):
 
 
 # Функция для сохранения срезов данных в JSON с учетом временного интервала и названия файла
-def save_intervals(columns_data, time_data, start, end, person_id, gesture_id, file_name):
+def save_intervals(columns_data, time_data, start, end, person_id, gesture_id, file_name, smooth):
     if not columns_data:
         messagebox.showerror("Error", "Данные отсутствуют для сохранения.")
         return
@@ -48,10 +48,11 @@ def save_intervals(columns_data, time_data, start, end, person_id, gesture_id, f
         "time_interval": {"start": start, "end": end},
         "save_time": str(datetime.datetime.now()),
         "time_data": filtered_time,
-        "data": filtered_columns_data
+        "data": filtered_columns_data,
+        "smooth": smooth
     }
 
-    save_dir = "cutted_data/raw2"
+    save_dir = "cutted_data/smooth"
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
@@ -136,8 +137,31 @@ def save_data():
 
     file_path = entry_file_path.get()
     time_data, columns_data, file_name = parse_xlsx(file_path)
+
+    smooth = 0
+    columns_data, time_data = process_data(columns_data, time_data)
+
+    # show_plot_emg(columns_data, time_data, f"EMG Data: {file_name}")
+    if entry_smoothing_window.get() == '':
+        # Отображение графиков
+        show_plot_emg(columns_data, time_data, f"EMG Data: {file_name}")
+    else:
+        try:
+            smoothing_window = int(entry_smoothing_window.get())
+        except ValueError:
+            messagebox.showerror("Error", "Ширина окна должна быть числом!")
+            return
+
+        # Сглаживание данных
+        smoothed_columns_data, smoothed_time_data = smooth_emg(columns_data, time_data, smoothing_window)
+        # Отображение графиков
+        show_plot_emg(smoothed_columns_data, smoothed_time_data,
+                      f"EMG Data: {file_name} \n SMOOTHED: {smoothing_window} ")
+        time_data, columns_data = smoothed_time_data, smoothed_columns_data
+        smooth = smoothing_window
+
     if time_data and columns_data:
-        save_intervals(columns_data, time_data, start, end, person_id, gesture_id, file_name)
+        save_intervals(columns_data, time_data, start, end, person_id, gesture_id, file_name, smooth)
 
 
 # Создание основного окна
@@ -182,12 +206,9 @@ gesture_file_path = os.path.join(current_dir, 'like_static_db/gestures.json')
 
 with open(person_file_path, 'r', encoding='utf-8') as file:
     person_options = json.load(file)
-# person_options = {"1": "dmitri", "2": "kate", "3": "kirill", "4": "maxim", "5": "nikita"}
 
 with open(gesture_file_path, 'r', encoding='utf-8') as file:
     gesture_options = json.load(file)
-# gesture_options = {"0": "rest", "1": "hold_fist", "2": "flexing_fist",
-#                    "3": "extension_fist", "4": "flexing_big_finger"}
 
 # Выпадающие меню для выбора человека и жеста
 label_person = tk.Label(root, text="Выберите человека:")

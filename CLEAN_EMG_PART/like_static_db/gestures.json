@@ -3,5 +3,8 @@
   "2": "hold_fist",
   "3": "flexing_fist",
   "4": "extension_fist",
-  "5": "flexing_big_finger"
+  "5": "flexing_big_finger",
+  "6": "full_flexing_fist",
+  "7": "full_extension",
+  "8": "full_big_finger"
 }
